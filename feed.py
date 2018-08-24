@@ -3,7 +3,7 @@ import moment
 import json
 import requests
 d = fp.parse('https://control.textlocal.in/feeds/inbox/?id=691202&inbox=10&hash=de6b03cce5c8f8e30dbfedc224a80d5faba6a658ffd507640ea8ffd5e6625b68')
-spaceUrl = 'https://xyz.api.here.com/hub/spaces/NBLaa1gZ/features?access_token=1XQiD54VN0pmWWuccdLi_w'
+spaceUrl = 'https://xyz.api.here.com/hub/spaces/F8PJrIcl/features?access_token=1XQiD54VN0pmWWuccdLi_w'
 
 for entry in d['entries']:
 	msg = entry['summary_detail']['value']
@@ -16,17 +16,21 @@ for entry in d['entries']:
 		number = 'title_detail'
 		
 		m = moment.date(date, '%Y-%m-%dT%H:%M:%SZ').timezone("Asia/Kolkata")
-		dateArray = m.format('DDMMM HH mm').split(' ')
-		#line = latitude+","+longitude+","+dateArray[0]+","+dateArray[1]
-		
+		dateArray = m.format('DDMMM HH mm').split(' ')	
 		
 		properties={}
-		properties['time']=m.format('DD/MM/YY HH:mm');
-		properties['user.anon']= entry['title_detail']['value'];
-		properties['disaster.event']= 'Landslide';
+		properties['Date_time']=m.format('DD/MM/YY HH:mm');
+		properties['Day_Month']=m.format('DD-MMM');
+		properties['Disater_Event']= 'Earthquake in Italy';
+		properties['Mobile_Number']= entry['title_detail']['value'];
+		properties['Day_Month_hour']=m.format('DD-MMMHH:mm');
 
 		tagsMap = {}
-		tagsMap['tags'] = [properties['user.anon'],'user.anon@'+properties['user.anon'],dateArray[0]+dateArray[1]+':00']
+		tagsMap['tags']=['disaster_rescueme_here_xyz_hackethon']
+		for key in properties:
+			tagsMap['tags'].append(properties[key])
+			tagsMap['tags'].append(key.lower()+'@'+properties[key])
+		#tagsMap['tags'] = [properties['Mobile_Number'],'Mobile_Number@'+properties['Mobile_Number'],properties['Date_time'],'date_time@']
 
 		properties["@ns:com:here:xyz"] = tagsMap
 
