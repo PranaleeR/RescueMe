@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rescue Me</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0px;
+            border: 0px;
+            padding: 0px;
+        }
+
+        .container {
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            position: absolute;
+        }
+
+        .header {
+            position: absolute;
+            top: -8px;
+            left: 50px;
+            padding-left: 50px;
+            right: 0;
+            padding: 10px;
+            z-index: 1000;
+        }
+
+        h2 {
+            margin: 10px 0;
+            text-shadow: 0px 0px 5px white;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .icon {
+            width: 20;
+            height: 20px;
+        }
+
+        #buttons div {
+            display: inline-block;
+            margin-right: 1em;
+            margin-bottom: 1em;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 1px solid black;
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        #buttons div:hover {
+            background-color: dodgerblue;
+            color: white;
+            cursor: pointer;
+        }
+
+
+
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+        <h2>Rescue Me</h2>
+       <input id="userNo" onclick="Clear()" style="height: 30px; width:500px" type="text" value="Enter Tag(E.g 190101010100,23-aug,23aug03:00,23/08/16_3:52,earthquake_in_japan)" >
+        </input>
+        <button style="height: 30px; width:100px" type="submit" onclick="submitMe()">Search</button>
+    </div>
+    <div class="container">
+        <div id="map"></div>
+    </div>
+
+    <!-- leaflet -->
+    <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"></script>
+
+    <!-- Demo setup -->
+    <script>
+
+        var theMap = L.map('map', {maxZoom: 14});
+        L.tileLayer('http://tile.stamen.com/terrain/{z}/{x}/{y}.png').addTo(theMap);
+
+        var manIcon = new L.DivIcon({html: '<img style="height: 60px; border: none; width:60px" class="icon" src="location.gif">'});
+
+
+
+        theMap.setView([11.865888,75.36188], 6);
+
+        function submitMe() {
+            var code = document.getElementById("userNo").value;
+            fetchData(code)//should output text box input
+        }
+        function Clear() {
+         document.getElementById("userNo").value = "";
+        }
+        var planes = [];
+        //var firstpolyline;
+        function renderPlanes(data) {
+           /* if(firstpolyline!=null){
+                firstpolyline.remove();
+            }*/
+            planes.forEach(function (c) { c.remove(); });
+            planes = [];
+            var pointList = [];
+            data.forEach(function (feature) {
+                var pointLoc = new L.LatLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+                pointList.push(pointLoc);
+                var c = L.marker(
+                    [feature.geometry.coordinates[1], feature.geometry.coordinates[0]],
+                    {
+                        icon: manIcon
+                    });
+                c.addTo(theMap);
+                console.log(feature.id);
+                c.bindTooltip('<h3>'+feature.properties['Mobile_Number'] + '</h3><ul><li>Recieved request at: ' + feature.properties.Date_time + '</li><li>Disaster event: ' + feature.properties['Disater_Event']+ '</li></ul>');
+                c.getElement().childNodes[0].style.transform = c.getElement().childNodes[0].style.transform + " rotate(" + feature.properties.Trak + "deg)";
+                planes.push(c);
+            });
+            //If we want path we uncomment this lines
+            /*firstpolyline = new L.Polyline(pointList, {
+                color: 'red',
+                weight: 3,
+                opacity: 0.5,
+                smoothFactor: 1
+            });*/
+           // firstpolyline.addTo(theMap);
+        }
+
+        function fetchData(UserCode) {
+            var url = 'https://xyz.api.here.com/hub/spaces/F8PJrIcl/search?access_token=1XQiD54VN0pmWWuccdLi_w&tags=' + UserCode;
+            var allFeatures = [];
+
+            fetch(url).then(resp => resp.json()).then(data => {
+                allFeatures = data.features;
+                renderPlanes(allFeatures);
+            if(allFeatures.length > 0){
+                var arr = [];
+                arr.push(allFeatures[0].geometry.coordinates[1]);
+                arr.push(allFeatures[0].geometry.coordinates[0]);
+                console.log(arr);
+                theMap.panTo(arr);
+                theMap.setZoom(12);
+            }
+
+            });
+        }
+
+    </script>
+
+  </body>
+</html>
